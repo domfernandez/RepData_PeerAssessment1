@@ -1,265 +1,184 @@
-# Reproducible Research: Peer Assessment 1
-This Project uses data collected from a personal activity monitoring device. 
-
-This device collects data at 5 minute intervals throughout the day, for two months - October and November of 2012, of an anonymous person.
-
-The information recorded at 5-minute intervals is the number of steps.
+Reproducible Research: Peer Assessment 1
+========================================
+Reproduced by Dom Fernandez
 
 ## Loading and preprocessing the data
 
-1. If the data-file does not exist, it is downloaded as a zipped-file.
-... Zipped-file is uncompressed and read as a data frame.
-3. The interval column is converted to factor type.
-4. The date column is converted to Date type.
-5. The data is examined by using summary and str methods on it.
+```r
+unzip("activity.zip")
+activity <- read.csv("activity.csv")
+```
+
+
+## What is the mean total number of steps taken per day?
+
+1. Make a histogram of the total number of steps taken each day
 
 
 ```r
-library(ggplot2)  # we shall use ggplot2 for plotting figures
-
-# download and read the data, convert columns for convenience
-read_data <- function() {
-    file_name = "activity.zip"
-    dwld_url = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
-    if (!file.exists(file_name)) {
-        download.file(dwld_url, destfile = file_name, method = "curl")
-    }
-    con <- unz(file_name, "activity.csv")
-    data_table <- read.csv(con, header = T, colClasses = c("numeric", "character", 
-        "numeric"))
-    data_table$interval <- factor(data_table$interval)
-    data_table$date <- as.Date(data_table$date, format = "%Y-%m-%d")
-    data_table
-}
-data_table <- read_data()
+steps.date <- aggregate(steps ~ date, data = activity, FUN = sum)
+barplot(steps.date$steps, names.arg = steps.date$date, xlab = "date", ylab = "steps")
 ```
 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
 
-## What is mean total number of steps taken per day?
 
-A Histogram is plotted for the total number of steps per day (steps/day) - at intervals of 1500 steps.
-
-Mean and Median are also plotted for the "daily total steps".
+2. Calculate and report the **mean** and **median** total number of
+   steps taken per day
 
 
 ```r
-daily_steps <- function(data_tablel) {
-    steps_per_day <- aggregate(steps ~ date, data_table, sum)
-    colnames(steps_per_day) <- c("date", "steps")
-    steps_per_day
-}
-
-plot_steps_per_day <- function(steps_per_day, mean_steps, median_steps) {
-    col_labels = c(paste("Mean:", mean_steps), paste("Median:", median_steps))
-    cols = c("green", "yellow")
-    
-    ggplot(steps_per_day, aes(x = steps)) + geom_histogram(fill = "steelblue", 
-        binwidth = 1500) + geom_point(aes(x = mean_steps, y = 0, color = "green"), 
-        size = 4, shape = 15) + geom_point(aes(x = median_steps, y = 0, color = "yellow"), 
-        size = 4, shape = 15) + scale_color_manual(name = element_blank(), labels = col_labels, 
-        values = cols) + labs(title = "Histogram of Steps Taken per Day", x = "Number of Steps", 
-        y = "Count") + theme_bw() + theme(legend.position = "bottom")
-}
-
-steps_per_day <- steps_per_day(data_table)
+mean(steps.date$steps)
 ```
 
 ```
-## Error: could not find function "steps_per_day"
+## [1] 10766
 ```
 
 ```r
-mean_steps = round(mean(steps_per_day$steps), 2)
+median(steps.date$steps)
 ```
 
 ```
-## Error: object 'steps_per_day' not found
-```
-
-```r
-median_steps = round(median(steps_per_day$steps), 2)
-```
-
-```
-## Error: object 'steps_per_day' not found
-```
-
-```r
-plot_steps_per_day(steps_per_day, mean_steps, median_steps)
-```
-
-```
-## Error: object 'mean_steps' not found
+## [1] 10765
 ```
 
 
 ## What is the average daily activity pattern?
 
-A plot of the average daily pattern of the number of steps is now plotted against the interval number. The interval that clocks the maximum number of steps on the average is also marked.
-
+1. Make a time series plot (i.e. `type = "l"`) of the 5-minute
+   interval (x-axis) and the average number of steps taken, averaged
+   across all days (y-axis)
 
 
 ```r
-steps_per_interval <- function(data_table) {
-    steps_pi <- aggregate(data_table$steps, by = list(interval = data_table$interval), 
-        FUN = mean, na.rm = T)
-    # convert to integers for plotting
-    steps_pi$interval <- as.integer(levels(steps_pi$interval)[steps_pi$interval])
-    colnames(steps_pi) <- c("interval", "steps")
-    steps_pi
-}
-
-plot <- function(steps_per_interval, max_step_interval) {
-    col_labels = c(paste("Interval with Maximum Activity: ", max_step_interval))
-    cols = c("red")
-    
-    ggplot(steps_per_interval, aes(x = interval, y = steps)) + geom_line(color = "steelblue", 
-        size = 1) + geom_point(aes(x = max_step_interval, y = 0, color = "red"), 
-        size = 4, shape = 15) + scale_color_manual(name = element_blank(), labels = col_labels, 
-        values = cols) + labs(title = "Average Daily Activity Pattern", x = "Interval", 
-        y = "Number of steps") + theme_bw() + theme(legend.position = "bottom")
-}
-
-steps_per_interval <- calc_steps_per_interval(data_table)
+steps.interval <- aggregate(steps ~ interval, data = activity, FUN = mean)
+plot(steps.interval, type = "l")
 ```
 
-```
-## Error: could not find function "calc_steps_per_interval"
-```
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+
+
+2. Which 5-minute interval, on average across all the days in the
+   dataset, contains the maximum number of steps?
+
 
 ```r
-max_step_interval <- steps_per_interval[which.max(steps_per_interval$steps), 
-    ]$interval
+steps.interval$interval[which.max(steps.interval$steps)]
 ```
 
 ```
-## Error: object of type 'closure' is not subsettable
+## [1] 835
 ```
 
-```r
-
-plot_activity_pattern(steps_per_interval, max_step_interval)
-```
-
-```
-## Error: could not find function "plot_activity_pattern"
-```
-
-
-The **
-
-```
-
-Error in eval(expr, envir, enclos) : object 'max_step_interval' not found
-
-```
-
-<sup>th</sup> interval** has the maximum activity on the average.
 
 
 ## Imputing missing values
 
-Missing values are populated with the mean value - at the same interval across days.
-
-Choose to do this because of the assumption that activities usually follow a daily pattern.
-
-
-```r
-impute_means <- function(data_table, defaults) {
-    na_indices <- which(is.na(data_table$steps))
-    defaults <- steps_per_interval
-    na_replacements <- unlist(lapply(na_indices, FUN = function(idx) {
-        interval = data_table[idx, ]$interval
-        defaults[defaults$interval == interval, ]$steps
-    }))
-    imp_steps <- data_table$steps
-    imp_steps[na_indices] <- na_replacements
-    imp_steps
-}
-complete_tbl <- data.frame(steps = impute_means(data_table, steps_per_interval), 
-    date = data_table$date, interval = data_table$interval)
-```
-
-```
-## Error: object of type 'closure' is not subsettable
-```
-
-
-The "completed" dataset is now Summarized with the updated values.
-
-```r
-summary(complete_tbl)
-```
-
-```
-## Error: object 'complete_tbl' not found
-```
-
-
-With the imputed dataset, below is a histogram of the daily total number of steps taken, plotted with a bin interval of 1500 steps. Also marked on the plot are the mean and median of the daily total steps.
+1. Calculate and report the total number of missing values in the
+   dataset (i.e. the total number of rows with `NA`s)
 
 
 ```r
-complete_steps_per_day <- daily_steps(complete_tbl)
-complete_mean_steps = round(mean(complete_steps_per_day$steps), 2)
-complete_median_steps = round(median(complete_steps_per_day$steps), 2)
-plot_steps_per_day(complete_steps_per_day, complete_mean_steps, complete_median_steps)
+sum(is.na(activity))
 ```
 
 ```
-## Error: object 'mean_steps' not found
+## [1] 2304
 ```
 
 
-Reviewing the work done, it is observed that mean value remains unchanged - but the median value shifts closer to the mean.
+2. Devise a strategy for filling in all of the missing values in the
+   dataset. The strategy does not need to be sophisticated. For
+   example, you could use the mean/median for that day, or the mean
+   for that 5-minute interval, etc.
+
+I will use the means for the 5-minute intervals as fillers for missing
+values.
+
+3. Create a new dataset that is equal to the original dataset but with
+   the missing data filled in.
+
+
+```r
+activity <- merge(activity, steps.interval, by = "interval", suffixes = c("", 
+    ".y"))
+nas <- is.na(activity$steps)
+activity$steps[nas] <- activity$steps.y[nas]
+activity <- activity[, c(1:3)]
+```
+
+
+4. Make a histogram of the total number of steps taken each day and
+   Calculate and report the **mean** and **median** total number of
+   steps taken per day. Do these values differ from the estimates from
+   the first part of the assignment? What is the impact of imputing
+   missing data on the estimates of the total daily number of steps?
+
+
+```r
+steps.date <- aggregate(steps ~ date, data = activity, FUN = sum)
+barplot(steps.date$steps, names.arg = steps.date$date, xlab = "date", ylab = "steps")
+```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8.png) 
+
+```r
+mean(steps.date$steps)
+```
+
+```
+## [1] 10766
+```
+
+```r
+median(steps.date$steps)
+```
+
+```
+## [1] 10766
+```
+
+
+The impact of the missing data seems rather low, at least when
+estimating the total number of steps per day.
+
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-We do this comparison with the table with filled-in missing values.
-
-1. Augment the table with a column that indicates the day of the week
-2. Subset the table into two parts - weekends (Saturday and Sunday) and weekdays (Monday through Friday).
-3. Tabulate the average steps per interval for each dataset.
-4. Plot the two datasets side by side for comparison.
+1. Create a new factor variable in the dataset with two levels --
+   "weekday" and "weekend" indicating whether a given date is a
+   weekday or weekend day.
 
 
 ```r
-calc_day_of_week_data <- function(data_table) {
-    data_table$weekday <- as.factor(weekdays(data_table$date))
-    weekend_data <- subset(data_table, weekday %in% c("Saturday", "Sunday"))
-    weekday_data <- subset(data_table, !weekday %in% c("Saturday", "Sunday"))
-    
-    weekend_spi <- calc_steps_per_interval(weekend_data)
-    weekday_spi <- calc_steps_per_interval(weekday_data)
-    
-    weekend_spi$dayofweek <- rep("weekend", nrow(weekend_spi))
-    weekday_spi$dayofweek <- rep("weekday", nrow(weekday_spi))
-    
-    day_of_week_data <- rbind(weekend_spi, weekday_spi)
-    day_of_week_data$dayofweek <- as.factor(day_of_week_data$dayofweek)
-    day_of_week_data
+daytype <- function(date) {
+    if (weekdays(as.Date(date)) %in% c("Saturday", "Sunday")) {
+        "weekend"
+    } else {
+        "weekday"
+    }
 }
-plot_day_of_week_comparison <- function(dow_data) {
-    ggplot(dow_data, aes(x = interval, y = steps)) + geom_line(color = "steelblue", 
-        size = 1) + facet_wrap(~dayofweek, nrow = 2, ncol = 1) + labs(x = "Interval", 
-        y = "Number of steps") + theme_bw()
-}
-day_of_week_data <- calc_day_of_week_data(complete_tbl)
+activity$daytype <- as.factor(sapply(activity$date, daytype))
 ```
 
-```
-## Error: object 'complete_tbl' not found
-```
+
+2. Make a panel plot containing a time series plot (i.e. `type = "l"`)
+   of the 5-minute interval (x-axis) and the average number of steps
+   taken, averaged across all weekday days or weekend days
+   (y-axis).
+
 
 ```r
-plot_day_of_week_comparison(day_of_week_data)
+par(mfrow = c(2, 1))
+for (type in c("weekend", "weekday")) {
+    steps.type <- aggregate(steps ~ interval, data = activity, subset = activity$daytype == 
+        type, FUN = mean)
+    plot(steps.type, type = "l", main = type)
+}
 ```
 
-```
-## Error: object 'day_of_week_data' not found
-```
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10.png) 
 
 
-Is is observed that "activity" on the weekends tends to be more spread out over the day - when compared to the weekdays. 
-
-The reason for this could be due to the fact that activities on weekdays are usually routine when compared to the weekends.
+It is observed that activity on the weekends tends to be more spread out over the day compared to the weekdays. This could be due to the fact that activities on weekdays are routine when compared to the weekend.
